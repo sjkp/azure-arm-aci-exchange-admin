@@ -1,0 +1,112 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {      
+        "containerInstanceLocation": {
+            "type": "string",
+            "defaultValue": "[parameters('location')]",
+            "allowedValues": [
+                "westus",
+                "eastus",
+                "westeurope",
+                "southeastaisa",
+                "westus2"
+            ],
+            "metadata": {
+                "description": "Container Instance Location"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "exchangeAdminPassword": {
+            "type": "securestring"
+        },
+        "exchangeAdminUser": {
+            "type": "string",
+            "metadata": {
+                "description": "Email of an exchange admin account"
+            }
+        },
+        "mailbox": {
+            "type": "string",
+            "metadata": {
+                "description": "Email of the inbox that should have the mail flow applied"
+            }
+        }
+    },
+    "variables": {
+        "image": "mcr.microsoft.com/powershell",
+        "cpuCores": "1.0",
+        "memoryInGb": "1.5",
+        "containerGroupName": "exchange-containerinstance",
+        "containerName": "addmailflow"        
+    },
+    "resources": [     
+        {
+            "name": "[variables('containerGroupName')]",
+            "type": "Microsoft.ContainerInstance/containerGroups",
+            "apiVersion": "2018-10-01",
+            "location": "[parameters('containerInstanceLocation')]",            
+            "dependsOn": [
+            ],
+            "properties": {
+                "containers": [
+                    {
+                        "name": "[variables('containerName')]",
+                        "properties": {
+                            "image": "[variables('image')]",
+                            "command": [
+                                "pswd",  
+                                "/home/exchange.ps1"
+                            ],
+                            "volumeMounts": [
+                                {
+                                    "name": "git",
+                                    "mountPath": "/home"
+                                }                                
+                            ],                            
+                            "environmentVariables": [
+                                {
+                                    "name": "exchangeAdminPassword",
+                                    "value": "[parameters('exchangeAdminPassword')]"
+                                },
+                                {
+                                    "name": "exchangeAdminUser",
+                                    "value": "[parameters('exchangeAdminUser')]"
+                                },
+                                {
+                                    "name": "mailbox",
+                                    "value": "[parameters('mailbox')]"
+                                }
+                            ],
+                            "resources": {
+                                "requests": {
+                                    "cpu": "[variables('cpuCores')]",
+                                    "memoryInGb": "[variables('memoryInGb')]"
+                                }
+                            }
+                        }
+                    }                    
+                ],
+                "restartPolicy": "Never",
+                "osType": "Linux",
+                "volumes": [
+                    {
+                        "name": "git",
+                        "gitRepo": {
+                            "directory": ".",
+                            "repository": "https://github.com/sjkp/azure-arm-aci-exchange-admin.git"
+                        }
+                    }
+                ]
+            }
+        }                
+    ],
+    "outputs": {        
+    }
+}
