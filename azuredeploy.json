@@ -61,7 +61,7 @@
                         "properties": {
                             "image": "[variables('image')]",
                             "command": [
-                                "pswd",  
+                                "pwsh",  
                                 "/home/exchange.ps1"
                             ],
                             "volumeMounts": [
